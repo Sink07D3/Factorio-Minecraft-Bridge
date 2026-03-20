@@ -20,10 +20,10 @@ namespace Factorio_MC_Bridge
 		{
 			/*
 				Input and checking for settings file.
-				This should probably not immedantly check but prompt the user with the current settings and if they would like to change them
+				This should probably not immediately check but instead prompt the user with the current settings and if they would like to change them
 			*/
 			Console.WriteLine("Starting Up!");
-			Console.WriteLine("To change settings, enter 1, otherwise press any key other to continue.");
+			Console.WriteLine("To change settings, enter 1, otherwise press enter to continue.");
 			string choice = Console.ReadLine();
 			Settings settings = new Settings();
 			string startupDoc = Path.Combine(Environment.CurrentDirectory, "settings.json");
@@ -35,7 +35,7 @@ namespace Factorio_MC_Bridge
 				settings.setMcPath(Console.ReadLine());
 				Console.WriteLine("Please enter Factorio Server Path (Root of the Directory): ");
 				settings.setFacotrioPath(Console.ReadLine());
-				Console.WriteLine("Please enter the IP Address of the Factorio Server: ");
+				Console.WriteLine("Please enter the IP Address of the Factorio Server (127.0.0.1 if you're hosting on the same machine): ");
 				settings.setIpAddress(Console.ReadLine());
 				Console.WriteLine("Please enter RCON Port Number: ");
 				settings.setPort(Int32.Parse(Console.ReadLine()));
@@ -68,17 +68,17 @@ namespace Factorio_MC_Bridge
 			FileStream fileStream = new FileStream(itemMappingsPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read);
 			StreamReader streamReader = new StreamReader(fileStream, Encoding.Default);
 
-			//This loops needs to do a couple of things. 
+			//This loop needs to do a couple of things. 
 			//The first is it needs to read in the mappings into the DualDictionary for better translation of names.
 			//The second it needs to bind the item ratios to their respective lists.
 			while (!streamReader.EndOfStream) {
 				//Item Name Mappings first
-				String readString = streamReader.ReadLine();
-				if (readString.Contains("#") || readString.Equals("") || readString.Equals("\n")) {
+				String readString = streamReader.ReadLine(); //read line
+				if (readString.Contains("#") || readString.Equals("") || readString.Equals("\n")) { //if the line is a comment, is blank, or is nothing but a new line, move to the next iteration
 					continue;
 				}
-				String[] split = readString.Split('=');
-				itemMappings.Add(split[0], split[1]);
+				String[] split = readString.Split('='); //split item pair from mapping file
+				itemMappings.Add(split[0], split[1]); //add the pair to current list of item mappings
 				//Split the string again to get the ratios
 				if (split.Length > 2) {
 					String[] ratios = split[2].Split(':');
@@ -103,10 +103,10 @@ namespace Factorio_MC_Bridge
 					List<ItemPair> minecraftItems = parseMinecraft(settings, itemMappings, minecraftRatios);
 					sendToFactorio(minecraftItems, rcon);
 					sendToMinecraft(factorioItems, settings);
-					Thread.Sleep(1000);
+					Thread.Sleep(500); //Thread.Sleep(1000); //would like to attempt transferring every half a second instead of every second. I wish there was a way to sync tickrates between factorio and minecraft.
 				}
 				catch (Exception e) {
-					Console.WriteLine("Something went wrong. Moving past error.");
+					Console.WriteLine("Something went wrong. Moving past error. This is great error handling.");
 					Console.WriteLine(e.Message);
 					continue;
 				}
