@@ -103,7 +103,8 @@ namespace Factorio_MC_Bridge
 					List<ItemPair> minecraftItems = parseMinecraft(settings, itemMappings, minecraftRatios);
 					sendToFactorio(minecraftItems, rcon);
 					sendToMinecraft(factorioItems, settings);
-					Thread.Sleep(500); //Thread.Sleep(1000); //would like to attempt transferring every half a second instead of every second. I wish there was a way to sync tickrates between factorio and minecraft.
+					Thread.Sleep(50); //Thread.Sleep(1000); //Lowest common transfer rate is 50ms per transfer (should be roughly every minecraft tick and every 3 factorio ticks). Might cause serious problems.
+					//I wish there was a way to sync tickrates between factorio and minecraft.
 				}
 				catch (Exception e) {
 					Console.WriteLine("Something went wrong. Moving past error. This is great error handling.");
