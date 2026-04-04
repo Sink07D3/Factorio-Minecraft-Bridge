@@ -94,7 +94,7 @@ data:extend({
         },
         results = {{type="item", name="receive-chest", amount=1}},
         energy_required = 0.25
-    }
+    },
 
 
 -- Send Tank
@@ -167,7 +167,32 @@ data:extend({
         filename = "__transfer-chest__/graphics/receive-tank.png",
         priority = "extra-high",
         width = 48,
-        height = 34,    
+        height = 34,
+        shift = {0.1875, 0}
+    }
+},
+{
+    type = "item",
+    name = "receive-tank",
+    icon = "__transfer-chest__/graphics/receive-tank-icon.png",
+    icon_size = 32,
+    flags = {},
+    subgroup = "storage",
+    order = "a[items]-b[receive-tank]",
+    place_result = "receive-tank",
+    stack_size = 50
+},
+{
+    type = "recipe",
+    name = "receive-tank",
+    ingredients = {
+        --TODO: Adjust ingredients 
+        {type="item", name="wood", amount=2},
+        {type="item", name="iron-plate", amount=2}
+    },
+    results = {{type="item", name="receive-tank", amount=1}},
+    energy_required = 0.25
+},
 -- Send Accumulator
 {
     type = "container",
@@ -206,6 +231,16 @@ data:extend({
     stack_size = 50
 },
 {
+    type = "recipe",
+    name = "send-accumulator",
+    ingredients = {
+        --TODO: Adjust ingredients 
+        {type="item", name="wood", amount=2},
+        {type="item", name="iron-plate", amount=2}
+    },
+    results = {{type="item", name="send-accumulator", amount=1}},
+    energy_required = 0.25
+},
 -- Receive Accumulator
 {
     type = "container",
