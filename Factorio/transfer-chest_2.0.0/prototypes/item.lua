@@ -1,4 +1,8 @@
--- Send = blue, receive = red. Vanilla __base__ sprites + tint on items, entities, recipes.
+--[[
+  Entity, item, and recipe prototypes for the transfer-chest mod.
+  Send = blue tint, receive = red tint (vanilla __base__ graphics where applicable).
+  Recipe ingredient lists are placeholders — tune for your mod pack.
+]]
 local transfer_send_tint = {0.35, 0.55, 1, 1}
 local transfer_receive_tint = {1, 0.35, 0.35, 1}
 -- Tank world sprites (same RGB as transfer_*; alpha 1 avoids premult artifacts at edges)
@@ -119,6 +123,60 @@ local function transfer_storage_tank(name, icon_tint, body_tint)
     }
 end
 
+-- Real electric accumulators (charge/discharge on the network); tinted like transfer send/receive.
+local function transfer_accumulator(name, icon_tint, body_tint)
+    return {
+        type = "accumulator",
+        name = name,
+        icons = {
+            {icon = icon_accumulator, icon_size = icon_size, tint = icon_tint}
+        },
+        flags = {"placeable-neutral", "player-creation"},
+        minable = {mining_time = 0.5, result = name},
+        fast_replaceable_group = "accumulator",
+        max_health = 150,
+        corpse = "accumulator-remnants",
+        collision_box = {{-0.9, -0.9}, {0.9, 0.9}},
+        selection_box = {{-1, -1}, {1, 1}},
+        drawing_box_vertical_extension = 0.5,
+        energy_source = {
+            type = "electric",
+            buffer_capacity = "5MJ",
+            usage_priority = "tertiary",
+            input_flow_limit = "300kW",
+            output_flow_limit = "300kW"
+        },
+        chargable_graphics = {
+            picture = {
+                layers = {
+                    {
+                        filename = "__base__/graphics/entity/accumulator/accumulator.png",
+                        priority = "high",
+                        width = 130,
+                        height = 189,
+                        shift = util.by_pixel(0, -11),
+                        scale = 0.5,
+                        tint = body_tint
+                    },
+                    {
+                        filename = "__base__/graphics/entity/accumulator/accumulator-shadow.png",
+                        priority = "high",
+                        width = 234,
+                        height = 106,
+                        shift = util.by_pixel(29, 6),
+                        scale = 0.5,
+                        draw_as_shadow = true
+                    }
+                }
+            }
+        },
+        impact_category = "metal-large",
+        open_sound = {filename = "__base__/sound/metallic-chest-open.ogg", volume = 0.65},
+        close_sound = {filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.7},
+        vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65}
+    }
+end
+
 data:extend({
     -- Send Chest (vanilla iron-chest graphics + send tint)
     {
@@ -182,7 +240,6 @@ data:extend({
             {icon = icon_chest, icon_size = icon_size, tint = transfer_send_tint}
         },
         ingredients = {
-            --TODO: Adjust ingredients 
             {type="item", name="wood", amount=2},
             {type="item", name="iron-plate", amount=2}
         },
@@ -251,7 +308,6 @@ data:extend({
             {icon = icon_chest, icon_size = icon_size, tint = transfer_receive_tint}
         },
         ingredients = {
-            --TODO: Adjust ingredients 
             {type="item", name="wood", amount=2},
             {type="item", name="iron-plate", amount=2}
         },
@@ -280,9 +336,8 @@ transfer_storage_tank("send-tank", transfer_send_tint, tank_send_tint),
     icons = {
         {icon = icon_tank, icon_size = icon_size, tint = transfer_send_tint}
     },
-    ingredients = {
-        --TODO: Adjust ingredients 
-        {type="item", name="wood", amount=2},
+        ingredients = {
+            {type="item", name="wood", amount=2},
         {type="item", name="iron-plate", amount=2}
     },
     results = {{type="item", name="send-tank", amount=1}},
@@ -308,58 +363,15 @@ transfer_storage_tank("receive-tank", transfer_receive_tint, tank_receive_tint),
     icons = {
         {icon = icon_tank, icon_size = icon_size, tint = transfer_receive_tint}
     },
-    ingredients = {
-        --TODO: Adjust ingredients 
-        {type="item", name="wood", amount=2},
+        ingredients = {
+            {type="item", name="wood", amount=2},
         {type="item", name="iron-plate", amount=2}
     },
     results = {{type="item", name="receive-tank", amount=1}},
     energy_required = 0.25
 },
--- Send Accumulator (vanilla accumulator graphics + send tint)
-{
-    type = "container",
-    name = "send-accumulator",
-    icons = {
-        {icon = icon_accumulator, icon_size = icon_size, tint = transfer_send_tint}
-    },
-    flags = {"placeable-neutral", "player-creation"},
-    minable = {mining_time = 1, result = "send-accumulator"},
-    max_health = 150,
-    corpse = "accumulator-remnants",
-    open_sound = { filename = "__base__/sound/metallic-chest-open.ogg", volume=0.65 },
-    close_sound = { filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.7 },
-    collision_box = {{-0.9, -0.9}, {0.9, 0.9}},
-    selection_box = {{-1, -1}, {1, 1}},
-    drawing_box_vertical_extension = 0.5,
-    fast_replaceable_group = "container",
-    inventory_size = 1,
-    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65 },
-    picture =
-    {
-        layers =
-        {
-            {
-                filename = "__base__/graphics/entity/accumulator/accumulator.png",
-                priority = "high",
-                width = 130,
-                height = 189,
-                shift = util.by_pixel(0, -11),
-                scale = 0.5,
-                tint = transfer_send_tint
-            },
-            {
-                filename = "__base__/graphics/entity/accumulator/accumulator-shadow.png",
-                priority = "high",
-                width = 234,
-                height = 106,
-                shift = util.by_pixel(29, 6),
-                scale = 0.5,
-                draw_as_shadow = true
-            }
-        }
-    }
-},
+-- Send Accumulator (real accumulator: 5 MJ buffer, ties to electric network)
+transfer_accumulator("send-accumulator", transfer_send_tint, transfer_send_tint),
 {
     type = "item",
     name = "send-accumulator",
@@ -378,58 +390,15 @@ transfer_storage_tank("receive-tank", transfer_receive_tint, tank_receive_tint),
     icons = {
         {icon = icon_accumulator, icon_size = icon_size, tint = transfer_send_tint}
     },
-    ingredients = {
-        --TODO: Adjust ingredients 
-        {type="item", name="wood", amount=2},
+        ingredients = {
+            {type="item", name="wood", amount=2},
         {type="item", name="iron-plate", amount=2}
     },
     results = {{type="item", name="send-accumulator", amount=1}},
     energy_required = 0.25
 },
 -- Receive Accumulator
-{
-    type = "container",
-    name = "receive-accumulator",
-    icons = {
-        {icon = icon_accumulator, icon_size = icon_size, tint = transfer_receive_tint}
-    },
-    flags = {"placeable-neutral", "player-creation"},
-    minable = {mining_time = 1, result = "receive-accumulator"},
-    max_health = 150,
-    corpse = "accumulator-remnants",
-    open_sound = { filename = "__base__/sound/metallic-chest-open.ogg", volume=0.65 },
-    close_sound = { filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.7 },
-    collision_box = {{-0.9, -0.9}, {0.9, 0.9}},
-    selection_box = {{-1, -1}, {1, 1}},
-    drawing_box_vertical_extension = 0.5,
-    fast_replaceable_group = "container",
-    inventory_size = 1,
-    vehicle_impact_sound =  { filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65 },
-    picture =
-    {
-        layers =
-        {
-            {
-                filename = "__base__/graphics/entity/accumulator/accumulator.png",
-                priority = "high",
-                width = 130,
-                height = 189,
-                shift = util.by_pixel(0, -11),
-                scale = 0.5,
-                tint = transfer_receive_tint
-            },
-            {
-                filename = "__base__/graphics/entity/accumulator/accumulator-shadow.png",
-                priority = "high",
-                width = 234,
-                height = 106,
-                shift = util.by_pixel(29, 6),
-                scale = 0.5,
-                draw_as_shadow = true
-            }
-        }
-    }
-},
+transfer_accumulator("receive-accumulator", transfer_receive_tint, transfer_receive_tint),
 {
     type = "item",
     name = "receive-accumulator",
@@ -448,9 +417,8 @@ transfer_storage_tank("receive-tank", transfer_receive_tint, tank_receive_tint),
     icons = {
         {icon = icon_accumulator, icon_size = icon_size, tint = transfer_receive_tint}
     },
-    ingredients = {
-        --TODO: Adjust ingredients 
-        {type="item", name="wood", amount=2},
+        ingredients = {
+            {type="item", name="wood", amount=2},
         {type="item", name="iron-plate", amount=2}
     },
     results = {{type="item", name="receive-accumulator", amount=1}},

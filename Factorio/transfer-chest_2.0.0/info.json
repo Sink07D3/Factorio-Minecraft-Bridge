@@ -1,11 +1,11 @@
 {
     "name": "transfer-chest",
     "version": "2.0.0",
-    "title": "Transfer Chest",
+    "title": "Factorio–Minecraft transfer bridge",
     "author": "You",
     "contact": "",
     "homepage": "",
     "factorio_version": "2.0",
-    "dependencies": ["base >= 0.16"],
-    "description": "Transfers Goods to MC"
+    "dependencies": ["base >= 2.0"],
+    "description": "Send/receive items, fluids, and energy to an external bridge via script-output and RCON remotes."
 }
