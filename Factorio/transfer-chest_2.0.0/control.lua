@@ -63,7 +63,6 @@ local function ONREMOVE( event )
                 break
             end
         end
-    end
     elseif entity.name == "send-tank" then
         for index, l in pairs( storage.transferTanks ) do
             if entity == l then
