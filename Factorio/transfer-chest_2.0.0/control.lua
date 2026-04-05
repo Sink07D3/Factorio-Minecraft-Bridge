@@ -14,11 +14,7 @@ local function ONBUILD( event )
         entity.destroy()
         table.insert( storage.transferChests, newSend )
     elseif entity.name == "send-tank" then
-        local surface = entity.surface
-        local force = entity.force
-        newSend = surface.create_entity{ name = "send-tank", position = entity.position, force = force }
-        entity.destroy()
-        table.insert( storage.transferChests, newSend )
+        table.insert(storage.transferTanks, entity)
     elseif entity.name == "send-accumulator" then
         local surface = entity.surface
         local force = entity.force
@@ -32,11 +28,7 @@ local function ONBUILD( event )
         entity.destroy()
         table.insert( storage.transferChests, newRec )
     elseif entity.name == "receive-tank" then
-        local surface = entity.surface
-        local force = entity.force
-        newRec = surface.create_entity{ name = "receive-tank", position = entity.position, force = force }
-        entity.destroy()
-        table.insert( storage.transferChests, newRec )
+        table.insert(storage.transferTanks, entity)
     elseif entity.name == "receive-accumulator" then
         local surface = entity.surface
         local force = entity.force
@@ -98,6 +90,7 @@ end
 
 
 script.on_init(ONLOAD)
+script.on_load(ONLOAD)
 
 commands.add_command("itemData", {"cmd.find-item"}, function(event)
     local player = game.players[event.player_index]
@@ -125,63 +118,44 @@ script.on_event( defines.events.on_entity_died, ONREMOVEREC )
 ]]
 
 --[[
-    Send Chest, write to the file
+    Send chests, tanks (fluids), accumulators — one line each "name:amount" to toMC.dat.
+    Tanks export Factorio fluid names and amounts (fluid units), not item stacks.
 ]]
-script.on_event({defines.events.on_tick}, 
-    function (e)
-        if e.tick % 60 == 0 then
-            local saveString = ""
-            temp = {}
-            for k, send in pairs (storage.transferChests) do
-                if send.name == "send-chest" then
-                    local inventory = send.get_inventory(defines.inventory.chest)
-                    if not inventory.is_empty() then
-                        saveString = saveString .. inventory[1].name .. ":" .. inventory[1].count .. "\n"
-                        inventory.clear();
-                    end
+script.on_event({defines.events.on_tick},
+    function(e)
+        if e.tick % 60 ~= 0 then
+            return
+        end
+        local saveString = ""
+        for _, send in pairs(storage.transferChests) do
+            if send.valid and send.name == "send-chest" then
+                local inventory = send.get_inventory(defines.inventory.chest)
+                if not inventory.is_empty() then
+                    saveString = saveString .. inventory[1].name .. ":" .. inventory[1].count .. "\n"
+                    inventory.clear()
                 end
             end
-            helpers.write_file("toMC.dat", saveString)
         end
-    end
-)
--- Send Tank
-script.on_event({defines.events.on_tick}, 
-    function (e)
-        if e.tick % 60 == 0 then
-            local saveString = ""
-            temp = {}
-            for k, send in pairs (storage.transferTanks) do
-                if send.name == "send-tank" then
-                    local inventory = send.get_inventory(defines.inventory.tank)
-                    if not inventory.is_empty() then
-                        saveString = saveString .. inventory[1].name .. ":" .. inventory[1].count .. "\n"
-                        inventory.clear();
-                    end
+        for _, send in pairs(storage.transferTanks) do
+            if send.valid and send.name == "send-tank" then
+                local fluid = send.fluidbox[1]
+                if fluid and fluid.name then
+                    local amt = fluid.amount
+                    saveString = saveString .. fluid.name .. ":" .. tostring(math.floor(amt)) .. "\n"
+                    send.fluidbox[1] = nil
                 end
             end
-            helpers.write_file("toMC.dat", saveString)
         end
-    end
-)
-
--- Send Accumulator
-script.on_event({defines.events.on_tick}, 
-    function (e)
-        if e.tick % 60 == 0 then
-            local saveString = ""
-            temp = {}
-            for k, send in pairs (storage.transferAccumulators) do
-                if send.name == "send-accumulator" then
-                    local inventory = send.get_inventory(defines.inventory.accumulator)
-                    if not inventory.is_empty() then
-                        saveString = saveString .. inventory[1].name .. ":" .. inventory[1].count .. "\n"
-                        inventory.clear();
-                    end
+        for _, send in pairs(storage.transferAccumulators) do
+            if send.valid and send.name == "send-accumulator" then
+                local inventory = send.get_inventory(defines.inventory.accumulator)
+                if not inventory.is_empty() then
+                    saveString = saveString .. inventory[1].name .. ":" .. inventory[1].count .. "\n"
+                    inventory.clear()
                 end
             end
-            helpers.write_file("toMC.dat", saveString)
         end
+        helpers.write_file("toMC.dat", saveString)
     end
 )
 
@@ -205,18 +179,25 @@ remote.add_interface("receiveItems",{
 })
 
 
--- Receive Tank
-remote.add_interface("receiveTanks",{
-    inputTanks = function(itemName, c)
-        local itemsToInsert = {name=itemName, count=c}
-        for k, rec in pairs (storage.transferTanks) do
-            if rec.name == "receive-tank" then
-                local inventory = rec.get_inventory(defines.inventory.tank)
-                if inventory.can_insert(itemsToInsert) then
-                    return inventory.insert(itemsToInsert)
+-- Receive Tank (fluids: Factorio fluid name + amount in fluid units)
+remote.add_interface("receiveTanks", {
+    inputTanks = function(fluidName, amount)
+        if not fluidName or type(fluidName) ~= "string" then
+            return 0
+        end
+        amount = amount or 0
+        if amount <= 0 then
+            return 0
+        end
+        for _, rec in pairs(storage.transferTanks) do
+            if rec.valid and rec.name == "receive-tank" then
+                local inserted = rec.insert_fluid({name = fluidName, amount = amount})
+                if inserted > 0 then
+                    return inserted
                 end
             end
         end
+        return 0
     end
 })
 
