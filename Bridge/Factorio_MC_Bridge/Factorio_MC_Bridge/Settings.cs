@@ -11,6 +11,10 @@ namespace Factorio_MC_Bridge {
 		public String ipAddress = "";
 		public int portNumber = 0;
 		public String rconPass = "";
+		/// <summary>
+		/// When true, read Factorio exports from script-output\toMC.dat (legacy). When false (default), pull via RCON remote.call("exportItems","pull").
+		/// </summary>
+		public bool useLegacyFactorioFileExport = false;
 
 		public Settings() {
 		}
@@ -50,6 +54,14 @@ namespace Factorio_MC_Bridge {
 		}
 		public void setRconPass(String s) {
 			rconPass = s;
+		}
+
+		public bool getUseLegacyFactorioFileExport() {
+			return useLegacyFactorioFileExport;
+		}
+
+		public void setUseLegacyFactorioFileExport(bool value) {
+			useLegacyFactorioFileExport = value;
 		}
 	}
 }
